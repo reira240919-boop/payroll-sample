@@ -1,0 +1,3 @@
+-- AlterTable
+ALTER TABLE "Invoice" ADD COLUMN "emailSentAt" TIMESTAMP(3);
+ALTER TABLE "Invoice" ADD COLUMN "mailed" BOOLEAN NOT NULL DEFAULT false;

@@ -1,0 +1,239 @@
+// Production schema (Vercel + Postgres). Local development still uses
+// prisma/schema.prisma (SQLite) — kept as a separate file+migration history
+// on purpose, see scripts/deploy-migrate.sh.
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Employee {
+  id                 String   @id @default(cuid())
+  email              String?
+  passwordHash       String
+  name               String   @unique
+  hourlyRate         Float    @default(0)
+  overtimeMultiplier Float    @default(1.25)
+  closingDay         Int?
+  payday             String?
+  paymentMethod      String   @default("振込")
+  role               String   @default("employee")
+  active             Boolean  @default(true)
+  needsSetup         Boolean  @default(false)
+  phone              String?
+  postalCode         String?
+  address            String?
+  birthDate          DateTime?
+  emergencyContactName     String?
+  emergencyContactRelation String?
+  emergencyContactPhone    String?
+  invoiceRegistrationNumber String?
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  fixedDeductions FixedDeductionTemplate[]
+  fixedAllowances FixedAllowanceTemplate[]
+  dailyReports    DailyReport[]
+  payslips        Payslip[]
+  salaryAdvances  SalaryAdvance[]
+}
+
+model Setting {
+  key   String @id
+  value String
+}
+
+model Contractor {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  email     String?
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+
+  invoices Invoice[]
+}
+
+model Invoice {
+  id           String   @id @default(cuid())
+  contractorId String
+  contractor   Contractor @relation(fields: [contractorId], references: [id], onDelete: Cascade)
+  issueDate    DateTime
+  periodLabel  String
+  memo         String?
+  emailSentAt  DateTime?
+  mailed       Boolean  @default(false)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  lines InvoiceLine[]
+}
+
+model InvoiceLine {
+  id          String  @id @default(cuid())
+  invoiceId   String
+  invoice     Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  section     String  @default("charge")
+  groupLabel  String?
+  content     String
+  quantity    Float?
+  unit        String?
+  unitPrice   Float?
+  amount      Float   @default(0)
+  taxCategory String?
+  sortOrder   Int     @default(0)
+}
+
+model PaydayOption {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+}
+
+model InvoiceOption {
+  id        String   @id @default(cuid())
+  type      String
+  name      String
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+
+  @@unique([type, name])
+}
+
+model FixedDeductionTemplate {
+  id         String   @id @default(cuid())
+  employeeId String
+  employee   Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  itemName   String
+  amount     Float    @default(0)
+  sortOrder  Int      @default(0)
+}
+
+model FixedAllowanceTemplate {
+  id         String   @id @default(cuid())
+  employeeId String
+  employee   Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  itemName   String
+  amount     Float    @default(0)
+  taxable    Boolean  @default(true)
+  sortOrder  Int      @default(0)
+}
+
+model DailyReport {
+  id             String   @id @default(cuid())
+  employeeId     String
+  employee       Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  date           DateTime
+  siteName       String
+  contractorName String?
+  workHours      Float
+  overtimeHours  Float    @default(0)
+  status         String   @default("draft")
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([employeeId, date])
+}
+
+model PayrollPeriod {
+  id        String   @id @default(cuid())
+  startDate DateTime
+  endDate   DateTime
+  status    String   @default("open")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  payslips Payslip[]
+
+  @@unique([startDate, endDate])
+}
+
+model Payslip {
+  id              String        @id @default(cuid())
+  employeeId      String
+  employee        Employee      @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  payrollPeriodId String
+  payrollPeriod   PayrollPeriod @relation(fields: [payrollPeriodId], references: [id], onDelete: Cascade)
+  status          String        @default("draft")
+  approvedAt      DateTime?
+  reviewRequestedAt DateTime?   // 社長に確認メールを送った日時
+  transferConfirmed Boolean     @default(false)
+  transferNoticeSentAt DateTime? // 社長に振込完了メールを送った日時
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  earningLines      PayslipEarningLine[]
+  deductionLines    PayslipDeductionLine[]
+  advanceRepayments AdvanceRepayment[]
+
+  @@unique([employeeId, payrollPeriodId])
+}
+
+model PayslipEarningLine {
+  id             String  @id @default(cuid())
+  payslipId      String
+  payslip        Payslip @relation(fields: [payslipId], references: [id], onDelete: Cascade)
+  siteName       String
+  contractorName String?
+  workType       String?
+  hours          Float
+  quantityUnit   String  @default("時間")
+  rate           Float
+  amount         Float
+  taxable        Boolean @default(true)
+  memo           String?
+  lineType       String  @default("auto")
+  sortOrder      Int     @default(0)
+}
+
+model PayrollOption {
+  id        String   @id @default(cuid())
+  type      String
+  name      String
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+
+  @@unique([type, name])
+}
+
+model PayslipDeductionLine {
+  id        String  @id @default(cuid())
+  payslipId String
+  payslip   Payslip @relation(fields: [payslipId], references: [id], onDelete: Cascade)
+  itemName  String
+  quantity  Float?
+  amount    Float
+  taxable   Boolean @default(true)
+  taxCategory String? // "10%対象" / "8%対象"（taxable=false のときは無視）
+  memo      String?
+  lineType  String
+  sortOrder Int     @default(0)
+}
+
+model SalaryAdvance {
+  id         String   @id @default(cuid())
+  employeeId String
+  employee   Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  loanDate   DateTime
+  loanAmount Float
+  balance    Float
+  memo       String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  repayments AdvanceRepayment[]
+}
+
+model AdvanceRepayment {
+  id              String        @id @default(cuid())
+  salaryAdvanceId String
+  salaryAdvance   SalaryAdvance @relation(fields: [salaryAdvanceId], references: [id], onDelete: Cascade)
+  payslipId       String?
+  payslip         Payslip?      @relation(fields: [payslipId], references: [id], onDelete: SetNull)
+  amount          Float
+  repaidAt        DateTime      @default(now())
+  memo            String?
+}

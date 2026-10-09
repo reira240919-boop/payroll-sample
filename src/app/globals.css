@@ -1,0 +1,54 @@
+@import "tailwindcss";
+
+body {
+  background: #f8fafc;
+  color: #0f172a;
+  font-family: system-ui, -apple-system, "Hiragino Sans", "Hiragino Kaku Gothic ProN", Meiryo, sans-serif;
+}
+
+input, select, textarea, button {
+  font-size: 16px;
+}
+
+@media (min-width: 640px) {
+  input, select, textarea, button {
+    font-size: 14px;
+  }
+}
+
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+input[type="number"] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+
+/* Mobile Safari treats a date input as a replaced element with its own
+   native sizing and ignores width:100% unless -webkit-appearance is
+   reset first, so it can render wider than siblings sharing the same
+   w-full class. */
+input[type="date"] {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+/* Chrome/Safari paint a persistent blue-ish background on autofilled
+   inputs (e.g. numeric fields the browser mistakes for a phone/OTP code)
+   that stays even after the user edits the value. Force it back to the
+   normal input background so the field doesn't look "stuck". */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0px 1000px #ffffff inset;
+  -webkit-text-fill-color: #0f172a;
+  transition: background-color 9999s ease-in-out 0s;
+}

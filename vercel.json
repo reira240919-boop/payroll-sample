@@ -1,0 +1,4 @@
+{
+  "buildCommand": "prisma generate --schema=prisma/postgres/schema.prisma && next build",
+  "regions": ["sin1"]
+}
