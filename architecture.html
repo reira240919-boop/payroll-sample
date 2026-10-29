@@ -1,0 +1,297 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>日報・給与明細 全体図</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@500;700;900&family=Noto+Sans+JP:wght@400;500;700&display=swap">
+<style>
+  /* レイアウト: 白い板の上に2段の流れ図（上=給与、下=請求書）。下に補足 */
+  :root {
+    --bg: #eef1f4;
+    --card: #ffffff;
+    --fg: #1d2633;
+    --muted: #5d6878;
+    --pay: #2f64a8;
+    --pay-soft: #6a9bd8;
+    --inv: #3f8a3c;
+    --inv-soft: #7fb87b;
+    --store: #e8873a;
+    --emp: #c2417a;
+    --adm: #6b4fb3;
+    --store-soft: #f3ac6e;
+    --display: "Zen Kaku Gothic New", "Hiragino Sans", "Yu Gothic", sans-serif;
+    --body: "Noto Sans JP", "Hiragino Sans", "Yu Gothic", sans-serif;
+  }
+  @page { size: A4 landscape; margin: 0; }
+  * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  html, body { margin: 0; }
+  body {
+    background: var(--bg);
+    color: var(--fg);
+    font-family: var(--body);
+    padding: 28px 16px 32px;
+  }
+  main { max-width: 1180px; margin: 0 auto; display: grid; gap: 16px; }
+  .board { background: var(--card); border-radius: 16px; padding: 24px 20px 12px; }
+  .scroll { overflow-x: auto; }
+  svg { display: block; width: 100%; min-width: 760px; height: auto; }
+  .caption { text-align: center; color: var(--muted); font-size: 15px; letter-spacing: .04em; margin: 0; }
+  .notes { justify-content: center; margin: 0 auto; color: var(--muted); font-size: 14px; line-height: 1.8; display: grid; gap: 4px; }
+  .notes p { margin: 0; white-space: nowrap; }
+  .notes strong { color: var(--fg); font-weight: 700; }
+  @media print {
+    body { zoom: .86; padding: 14px 16px 0; min-height: 0; }
+  }
+
+  /* 図の中の文字と色 */
+  .h { font-family: var(--display); font-weight: 900; font-size: 26px; fill: var(--fg); }
+  .name { font-family: var(--display); font-weight: 700; font-size: 18px; fill: var(--fg); text-anchor: middle; }
+  .tech { font-family: var(--body); font-size: 13px; fill: var(--muted); text-anchor: middle; }
+  .tag { font-family: var(--body); font-size: 13px; font-weight: 500; text-anchor: middle; }
+  .paper { fill: var(--card); }
+  .pay { color: var(--pay); }
+  .inv { color: var(--inv); }
+  .arrow-p { stroke: var(--pay-soft); stroke-width: 4; fill: none; }
+  .arrow-i { stroke: var(--inv-soft); stroke-width: 4; fill: none; }
+  .head-p { fill: var(--pay-soft); }
+  .head-i { fill: var(--inv-soft); }
+  .link { stroke: var(--inv); stroke-width: 4; fill: none; }
+  .db-body { fill: var(--store); }
+  .db-top { fill: var(--store-soft); }
+  .db-band { stroke: var(--card); stroke-width: 3; fill: none; }
+  .on-color { fill: var(--card); }
+  .pill-emp { fill: var(--emp); }
+  .pill-adm { fill: var(--adm); }
+  .pill-t { font-family: var(--body); font-size: 13px; font-weight: 700; fill: #fff; text-anchor: middle; }
+  .legend { font-family: var(--body); font-size: 14px; font-weight: 500; fill: var(--fg); }
+  .ln { stroke: currentColor; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; fill: none; }
+  .ol { stroke: currentColor; stroke-width: 3; stroke-linejoin: round; }
+</style>
+</head>
+<body>
+<main>
+  <section class="board" aria-label="日報・給与明細（サンプル）の全体図">
+    <div class="scroll">
+      <svg viewBox="0 0 1200 650" role="img" aria-labelledby="fig-title">
+        <title id="fig-title">給与（日報入力 → 保存 → 確認・修正 → 自動計算 → 承認 → 明細閲覧）と、請求書（日報データ → 請求書作成 → PDF → メール送信 → 元請け）の流れ</title>
+        <defs>
+          <marker id="mp" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="4" markerHeight="4" orient="auto"><path class="head-p" d="M0 0 L10 5 L0 10 z"/></marker>
+          <marker id="mi" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="4" markerHeight="4" orient="auto"><path class="head-i" d="M0 0 L10 5 L0 10 z"/></marker>
+          <marker id="ml" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="4" markerHeight="4" orient="auto"><path fill="var(--inv)" d="M0 0 L10 5 L0 10 z"/></marker>
+
+          <!-- スマホで日報入力 -->
+          <g id="i-phone">
+            <rect x="-30" y="-48" width="60" height="96" rx="9" class="paper ol"/>
+            <path class="ln" d="M-8 -38 H8"/>
+            <rect x="-20" y="-26" width="40" height="12" rx="3" fill="currentColor"/>
+            <path class="ln" d="M-20 -2 H20 M-20 10 H20 M-20 22 H8"/>
+            <circle cx="0" cy="38" r="3.5" fill="currentColor"/>
+          </g>
+
+          <!-- データベース -->
+          <g id="i-db">
+            <path class="db-body" d="M-36 -30 V30 A36 12 0 0 0 36 30 V-30 Z"/>
+            <path class="db-band" d="M-36 -8 A36 12 0 0 0 36 -8 M-36 12 A36 12 0 0 0 36 12"/>
+            <ellipse class="db-top" cx="0" cy="-30" rx="36" ry="12"/>
+          </g>
+
+          <!-- 確認・修正（書類＋えんぴつ） -->
+          <g id="i-review">
+            <path d="M-40 -44 H10 L24 -30 V44 H-40 Z" class="paper ol"/>
+            <path class="ln" d="M10 -44 V-30 H24"/>
+            <path class="ln" d="M-30 -22 L-24 -16 L-14 -28 M-6 -22 H12"/>
+            <path class="ln" d="M-30 0 L-24 6 L-14 -6 M-6 0 H12"/>
+            <path class="ln" d="M-30 22 H0"/>
+            <path d="M40 -6 L50 4 L16 38 L4 40 L6 28 Z" fill="currentColor"/>
+          </g>
+
+          <!-- 自動計算（電卓） -->
+          <g id="i-calc">
+            <rect x="-34" y="-46" width="68" height="92" rx="8" fill="currentColor"/>
+            <rect x="-24" y="-36" width="48" height="22" rx="3" class="paper"/>
+            <text x="18" y="-19" font-size="14" font-weight="700" text-anchor="end" font-family="var(--body)" fill="currentColor">¥</text>
+            <g class="on-color">
+              <rect x="-24" y="-6" width="12" height="10" rx="2"/><rect x="-6" y="-6" width="12" height="10" rx="2"/><rect x="12" y="-6" width="12" height="10" rx="2"/>
+              <rect x="-24" y="10" width="12" height="10" rx="2"/><rect x="-6" y="10" width="12" height="10" rx="2"/><rect x="12" y="10" width="12" height="10" rx="2"/>
+              <rect x="-24" y="26" width="12" height="10" rx="2"/><rect x="-6" y="26" width="12" height="10" rx="2"/><rect x="12" y="26" width="12" height="10" rx="2"/>
+            </g>
+          </g>
+
+          <!-- 承認して確定（判子のような丸＋チェック） -->
+          <g id="i-approve">
+            <circle cx="0" cy="-6" r="38" fill="currentColor"/>
+            <circle cx="0" cy="-6" r="29" fill="none" stroke="var(--card)" stroke-width="3"/>
+            <path d="M-14 -6 L-4 5 L15 -16" fill="none" stroke="var(--card)" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M-20 26 L-28 50 L-14 44 L-8 56 L0 32 Z M20 26 L28 50 L14 44 L8 56 L0 32 Z" fill="currentColor" opacity=".7"/>
+          </g>
+
+          <!-- 明細を見る（画面＋PDF） -->
+          <g id="i-slip">
+            <rect x="-48" y="-40" width="96" height="66" rx="5" class="paper ol"/>
+            <path class="ln" d="M-12 26 L-16 42 H16 L12 26 M-26 44 H26"/>
+            <rect x="-38" y="-30" width="44" height="14" rx="3" fill="currentColor" opacity=".7"/>
+            <path class="ln" d="M-38 -4 H34 M-38 6 H20"/>
+            <rect x="8" y="10" width="32" height="12" rx="3" fill="currentColor"/>
+            <text x="24" y="19.5" class="on-color" font-size="9" font-weight="700" text-anchor="middle" font-family="var(--body)">PDF</text>
+          </g>
+
+          <!-- 請求書を作成 -->
+          <g id="i-invoice">
+            <path d="M-36 -46 H14 L30 -30 V46 H-36 Z" class="paper ol"/>
+            <path class="ln" d="M14 -46 V-30 H30"/>
+            <text x="-3" y="-14" font-size="15" font-weight="700" text-anchor="middle" font-family="var(--display)" fill="currentColor">請求書</text>
+            <path class="ln" d="M-24 2 H18 M-24 14 H18 M-24 26 H4"/>
+            <rect x="-2" y="30" width="24" height="10" rx="2" fill="currentColor"/>
+            <circle cx="36" cy="24" r="16" fill="currentColor"/>
+            <text x="36" y="30" class="on-color" font-size="16" font-weight="700" text-anchor="middle" font-family="var(--body)">¥</text>
+          </g>
+
+          <!-- PDF -->
+          <g id="i-pdf">
+            <rect x="-38" y="-46" width="52" height="66" rx="4" class="paper ol"/>
+            <path d="M-14 -26 H22 L36 -12 V46 H-14 Z" class="paper ol"/>
+            <path class="ln" d="M22 -26 V-12 H36"/>
+            <path class="ln" d="M-4 -6 H26 M-4 4 H26 M-4 14 H18"/>
+            <rect x="-26" y="24" width="38" height="18" rx="3" fill="currentColor"/>
+            <text x="-7" y="37.5" class="on-color" font-size="12" font-weight="700" text-anchor="middle" font-family="var(--body)">PDF</text>
+          </g>
+
+          <!-- メールで送る -->
+          <g id="i-mail">
+            <rect x="-50" y="-32" width="88" height="62" rx="6" fill="currentColor"/>
+            <path d="M-44 -24 L-6 6 L32 -24" fill="none" stroke="var(--card)" stroke-width="4" stroke-linejoin="round"/>
+            <circle cx="40" cy="28" r="17" class="paper ol"/>
+            <path class="ln" d="M32 28 H47 M41 22 L47 28 L41 34"/>
+          </g>
+
+          <!-- 元請け（会社の建物） -->
+          <g id="i-company">
+            <rect x="-38" y="-44" width="48" height="92" rx="3" fill="currentColor"/>
+            <rect x="10" y="-14" width="30" height="62" rx="3" fill="currentColor" opacity=".7"/>
+            <g class="on-color">
+              <rect x="-28" y="-34" width="10" height="10" rx="1"/><rect x="-10" y="-34" width="10" height="10" rx="1"/>
+              <rect x="-28" y="-16" width="10" height="10" rx="1"/><rect x="-10" y="-16" width="10" height="10" rx="1"/>
+              <rect x="-28" y="2" width="10" height="10" rx="1"/><rect x="-10" y="2" width="10" height="10" rx="1"/>
+              <rect x="18" y="-4" width="14" height="8" rx="1"/><rect x="18" y="12" width="14" height="8" rx="1"/>
+              <rect x="-20" y="28" width="12" height="20" rx="1"/>
+            </g>
+          </g>
+          <!-- 誰の画面かを示す札 -->
+          <g id="p-emp"><rect x="-36" y="-12" width="72" height="24" rx="12" class="pill-emp"/><text y="4.5" class="pill-t">従業員</text></g>
+          <g id="p-adm"><rect x="-42" y="-12" width="84" height="24" rx="12" class="pill-adm"/><text y="4.5" class="pill-t">管理画面</text></g>
+        </defs>
+
+        <!-- 凡例 -->
+        <circle cx="742" cy="38" r="8" class="pill-emp"/>
+        <text x="756" y="43" class="legend">従業員の画面（スマホ）</text>
+        <circle cx="940" cy="38" r="8" class="pill-adm"/>
+        <text x="954" y="43" class="legend">管理画面（社長・事務員）</text>
+
+        <!-- ===== 上の段：給与 ===== -->
+        <text x="20" y="44" class="h">給与（毎月の流れ）</text>
+
+        <g class="pay">
+          <use href="#i-phone" x="100" y="150"/>
+          <use href="#i-review" x="500" y="150"/>
+          <use href="#i-calc" x="700" y="150"/>
+          <use href="#i-approve" x="900" y="150"/>
+          <use href="#i-slip" x="1100" y="150"/>
+        </g>
+        <use href="#i-db" x="300" y="150"/>
+
+        <use href="#p-emp" x="100" y="80"/>
+        <use href="#p-adm" x="500" y="80"/>
+        <use href="#p-adm" x="700" y="80"/>
+        <use href="#p-adm" x="900" y="80"/>
+        <use href="#p-emp" x="1100" y="80"/>
+
+        <path class="arrow-p" d="M146 150 H232" marker-end="url(#mp)"/>
+        <path class="arrow-p" d="M352 150 H436" marker-end="url(#mp)"/>
+        <path class="arrow-p" d="M560 150 H636" marker-end="url(#mp)"/>
+        <path class="arrow-p" d="M750 150 H836" marker-end="url(#mp)"/>
+        <path class="arrow-p" d="M954 150 H1032" marker-end="url(#mp)"/>
+
+        <text x="100" y="232" class="name">日報を入力</text>
+        <text x="100" y="256" class="tech">従業員がスマホで</text>
+        <text x="100" y="275" class="tech">現場名・作業時間・残業</text>
+
+        <text x="300" y="232" class="name">データベースに保存</text>
+        <text x="300" y="256" class="tech">PostgreSQL（本番）</text>
+        <text x="300" y="275" class="tech">手元の試用は SQLite</text>
+
+        <text x="500" y="232" class="name">日報を確認・修正</text>
+        <text x="500" y="256" class="tech">管理者（社長・事務員）</text>
+        <text x="500" y="275" class="tech">追加・修正もできる</text>
+
+        <text x="700" y="232" class="name">給与を自動計算</text>
+        <text x="700" y="256" class="tech">日報から支給額を作る</text>
+        <text x="700" y="275" class="tech">手当・控除・前払いの返済</text>
+
+        <text x="900" y="232" class="name">承認して確定</text>
+        <text x="900" y="256" class="tech">確定した明細だけ</text>
+        <text x="900" y="275" class="tech">従業員が見られる</text>
+
+        <text x="1100" y="232" class="name">明細を見る</text>
+        <text x="1100" y="256" class="tech">従業員の画面で表示</text>
+        <text x="1100" y="275" class="tech">PDF でダウンロード</text>
+
+        <!-- 同じ日報を、請求書にも使う -->
+        <path class="link" d="M300 292 V404" marker-end="url(#ml)"/>
+        <text x="314" y="352" class="tag" fill="var(--inv)" style="text-anchor:start">同じ日報を請求書にも使う</text>
+
+        <!-- ===== 下の段：請求書 ===== -->
+        <text x="20" y="390" class="h">請求書（元請けへ）</text>
+
+        <use href="#i-db" x="300" y="470"/>
+
+        <use href="#p-adm" x="500" y="402"/>
+        <use href="#p-adm" x="700" y="402"/>
+        <use href="#p-adm" x="900" y="402"/>
+        <g class="inv">
+          <use href="#i-invoice" x="500" y="470"/>
+          <use href="#i-pdf" x="700" y="470"/>
+          <use href="#i-mail" x="900" y="470"/>
+          <use href="#i-company" x="1100" y="470"/>
+        </g>
+
+        <path class="arrow-i" d="M352 470 H436" marker-end="url(#mi)"/>
+        <path class="arrow-i" d="M560 470 H636" marker-end="url(#mi)"/>
+        <path class="arrow-i" d="M752 470 H832" marker-end="url(#mi)"/>
+        <path class="arrow-i" d="M964 470 H1034" marker-end="url(#mi)"/>
+
+        <text x="300" y="552" class="name">日報データ</text>
+        <text x="300" y="576" class="tech">元請けごとに集める</text>
+        <text x="300" y="595" class="tech">日報を見ながら作れる</text>
+
+        <text x="500" y="552" class="name">請求書を作成</text>
+        <text x="500" y="576" class="tech">管理者の画面</text>
+        <text x="500" y="595" class="tech">税込の行・控除にも対応</text>
+
+        <text x="700" y="552" class="name">PDF を作成</text>
+        <text x="700" y="576" class="tech">小計・消費税・合計を</text>
+        <text x="700" y="595" class="tech">自動で計算して表示</text>
+
+        <text x="900" y="552" class="name">メールで送る</text>
+        <text x="900" y="576" class="tech">Gmail から送信</text>
+        <text x="900" y="595" class="tech">PDF を添付</text>
+
+        <text x="1100" y="552" class="name">元請けに届く</text>
+        <text x="1100" y="576" class="tech">PDF つきのメール</text>
+      </svg>
+    </div>
+  </section>
+
+  <p class="caption">日報・給与明細・請求書（サンプル） 全体図</p>
+
+  <div class="notes">
+    <p><strong>2つの画面：</strong>ログインすると、従業員は「従業員の画面」、社長・事務員は「管理画面」に自動で分かれます。従業員が見られるのは自分の分だけです。</p>
+    <p><strong>そのほかの画面：</strong>前払いの台帳（貸した額と残り）、振込金額一覧（振込日ごとの金額）、会社情報の設定。</p>
+    <p><strong>メールで送るもの：</strong>元請けへの請求書のほか、社長への明細の確認依頼と振込完了のお知らせ、税理士への明細（すべて Gmail から）。</p>
+    <p><strong>置き場所：</strong>画面は Vercel（シンガポールの設定）、データは PostgreSQL。中身はすべて作り物のサンプルです。</p>
+  </div>
+</main>
+</body>
+</html>
