@@ -1,0 +1,226 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<title>日報・給与明細 しくみ図</title>
+<style>
+  /* しくみと安全の説明図。1600×1120 の1枚を、横向き A4 の PDF にする */
+  :root {
+    --bg: #f3f5f8;
+    --card: #ffffff;
+    --fg: #1d2633;
+    --muted: #5d6878;
+    --rule: #d6dce4;
+    --tokyo: #e8873a;
+    --tokyo-soft: #fdf3ea;
+    --us: #7a8494;
+    --us-soft: #f1f2f5;
+    --phone: #2f64a8;
+    --phone-soft: #edf3fb;
+    --line: #5d6878;
+    --line-soft: #f6f7f9;
+    --ask: #3f8a3c;
+    --own: #2f64a8;
+    --gate: #b42318;
+    --font: "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Noto Sans JP", "Yu Gothic", sans-serif;
+  }
+  @page { size: A4 landscape; margin: 0; }
+  * { box-sizing: border-box; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  html, body { margin: 0; background: var(--bg); }
+  body { font-family: var(--font); color: var(--fg); }
+  .canvas { position: relative; width: 1600px; height: 1120px; margin: 0 auto; background: var(--bg); }
+  .abs { position: absolute; }
+  @media print {
+    .canvas { zoom: .70; }
+  }
+
+  header { left: 40px; top: 28px; right: 40px; }
+  header h1 { margin: 0; font-size: 34px; font-weight: 800; letter-spacing: .02em; }
+  header p { margin: 6px 0 0; font-size: 16px; color: var(--muted); }
+
+  .zone { border: 3px solid; padding: 12px 18px; }
+  .zone .label { font-size: 17px; font-weight: 800; }
+  .zone .label small { font-weight: 500; font-size: 14px; color: var(--muted); margin-left: 8px; }
+  .phone { border-color: var(--phone); background: var(--phone-soft); }
+  .phone .label { color: var(--phone); }
+  .line { border-color: var(--line); background: var(--line-soft); }
+  .line .label { color: #3d4757; }
+  .tokyo { border-color: var(--tokyo); background: var(--tokyo-soft); border-width: 4px; }
+  .tokyo .label { color: #b85e17; }
+  .us { border-color: var(--us); background: var(--us-soft); border-style: dashed; }
+  .us .label { color: #4b5463; }
+
+  .box { background: var(--card); border: 2px solid var(--rule); padding: 14px 16px; display: grid; align-content: start; gap: 4px; }
+  .box h2 { margin: 0; font-size: 21px; font-weight: 800; }
+  .box p { margin: 0; font-size: 13.5px; color: var(--muted); line-height: 1.55; }
+  .box p b { color: var(--fg); font-weight: 700; }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+  .chip { font-size: 13px; padding: 3px 9px; background: var(--tokyo-soft); border: 1px solid #f1c9a5; color: #8a4a12; }
+  .gate { font-size: 13px; font-weight: 700; color: #fff; background: var(--gate); padding: 4px 10px; justify-self: start; margin-top: 6px; }
+
+  .step { font-size: 13.5px; font-weight: 700; line-height: 1.45; white-space: nowrap; background: #fff; border: 1px solid currentColor; padding: 1px 6px; }
+  .step.s { color: var(--ask); }
+  .step.i { color: var(--own); }
+  .gates { display: flex; flex-wrap: wrap; gap: 6px; }
+  .gates .gate { margin-top: 0; }
+
+  .legend { right: 40px; top: 40px; display: flex; gap: 18px; font-size: 14px; color: var(--muted); align-items: center; }
+  .legend span { display: inline-flex; align-items: center; gap: 6px; }
+  .legend i { display: inline-block; width: 28px; height: 4px; }
+
+  .safety { left: 40px; right: 40px; top: 800px; height: 290px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
+  .safety h3 { margin: 0 0 4px; font-size: 15px; letter-spacing: .08em; color: var(--muted); grid-column: 1 / -1; }
+  .card { background: var(--card); border-top: 5px solid; padding: 16px 18px; display: grid; align-content: start; gap: 8px; }
+  .card h4 { margin: 0; font-size: 19px; font-weight: 800; }
+  .card ul { margin: 0; padding-left: 1.1em; display: grid; gap: 6px; font-size: 13.5px; line-height: 1.6; color: #2c3644; }
+  .card ul small { color: var(--muted); font-size: 13px; }
+  .card.gatec { border-color: var(--gate); }
+  .card.tokyoc { border-color: var(--tokyo); }
+  .card.usc { border-color: var(--us); }
+</style>
+</head>
+<body>
+<div class="canvas">
+
+  <header class="abs">
+    <h1>日報・給与明細 のしくみと安全の境界</h1>
+    <p>日報・給与明細（サンプル）　しくみと安全の説明 ／ スマホの日報から明細を作り、確定した分だけを従業員に届けます</p>
+  </header>
+  <div class="abs legend">
+    <span><i style="background:var(--ask)"></i>従業員の操作（①〜③）</span>
+    <span><i style="background:var(--own)"></i>管理画面とメール（Ⓐ〜Ⓓ）</span>
+  </div>
+
+  <!-- 区域 -->
+  <div class="abs zone phone" style="left:40px; top:140px; width:270px; height:620px;">
+    <div class="label">スマホ・パソコン<small>使う人</small></div>
+  </div>
+  <div class="abs zone tokyo" style="left:340px; top:140px; width:520px; height:620px;">
+    <div class="label">サイト<small>Vercel のシンガポールで動く</small></div>
+  </div>
+  <div class="abs zone tokyo" style="left:890px; top:140px; width:280px; height:620px;">
+    <div class="label">保管庫<small>サイトだけが読み書き</small></div>
+  </div>
+  <div class="abs zone us" style="left:1200px; top:140px; width:360px; height:620px;">
+    <div class="label">メール<small>Google の Gmail</small></div>
+  </div>
+
+  <!-- 箱 -->
+  <div class="abs box" style="left:60px; top:200px; width:230px; height:180px;">
+    <h2>従業員</h2>
+    <p>スマホで日報を入れる。日付・現場名・作業時間・残業時間だけで、単価は入れない</p>
+    <p>確定した明細を見て、PDF で受け取る</p>
+  </div>
+  <div class="abs box" style="left:60px; top:520px; width:230px; height:210px;">
+    <h2>社長・事務員</h2>
+    <p>管理画面で日報を確かめ、明細を作って承認する</p>
+    <p>時給・控除の設定、前払いの台帳、元請けへの請求書もここで扱う</p>
+  </div>
+
+  <div class="abs box" style="left:470px; top:196px; width:370px; height:210px;">
+    <h2>従業員の画面</h2>
+    <p><b>Next.js</b>（画面と計算をまとめて作るしくみ）で作ったサイト。日報の入力・一覧・明細の表示と PDF</p>
+    <div class="gates">
+      <div class="gate">パスワードで本人確認</div>
+      <div class="gate">自分の分だけ表示</div>
+    </div>
+  </div>
+  <div class="abs box" style="left:470px; top:520px; width:370px; height:210px;">
+    <h2>管理画面</h2>
+    <p>同じサイトの中にある。日報から給与を自動で計算し、承認すると確定する。請求書の PDF もここで作る</p>
+    <div class="gates">
+      <div class="gate">パスワードで本人確認</div>
+      <div class="gate">管理者だけ開ける</div>
+    </div>
+  </div>
+
+  <div class="abs box" style="left:910px; top:320px; width:240px; height:264px;">
+    <h2>保管庫</h2>
+    <p><b>PostgreSQL</b>（データをためておく場所）。サイトのサーバーからだけ読み書きする</p>
+    <div class="chips">
+      <span class="chip">日報</span>
+      <span class="chip">時給・控除の設定</span>
+      <span class="chip">給与明細</span>
+      <span class="chip">前払いの台帳</span>
+      <span class="chip">請求書</span>
+      <span class="chip">会社情報</span>
+    </div>
+  </div>
+
+  <div class="abs box" style="left:1220px; top:196px; width:320px; height:300px;">
+    <h2>メールを受け取る人</h2>
+    <p><b>元請け</b>：請求書（PDF つき）</p>
+    <p><b>社長</b>：明細の確認依頼（PDF つき）、振込が全員分そろったときのお知らせ</p>
+    <p><b>税理士</b>：確定した明細（PDF つき）</p>
+    <p>従業員にはメールを送らない。明細はサイトで見る</p>
+  </div>
+  <div class="abs box" style="left:1220px; top:560px; width:320px; height:170px;">
+    <h2>Gmail から送る</h2>
+    <p>会社の Gmail を、アプリパスワード（メール送信専用の合言葉）で使う。宛先は管理画面で決めたアドレスだけ</p>
+  </div>
+
+  <!-- 矢印 -->
+  <svg class="abs" style="left:0; top:0;" width="1600" height="1120" viewBox="0 0 1600 1120" aria-hidden="true">
+    <defs>
+      <marker id="hs" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#3f8a3c"/></marker>
+      <marker id="hi" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#2f64a8"/></marker>
+    </defs>
+    <g fill="none" stroke-width="4">
+      <!-- ① 従業員 → 従業員の画面 -->
+      <path d="M290,250 H466" stroke="#3f8a3c" marker-end="url(#hs)"/>
+      <!-- ② 従業員の画面 ⇄ 保管庫 -->
+      <path d="M844,370 H906" stroke="#3f8a3c" marker-start="url(#hs)" marker-end="url(#hs)"/>
+      <!-- ③ 従業員の画面 → 従業員 -->
+      <path d="M470,350 H294" stroke="#3f8a3c" marker-end="url(#hs)"/>
+      <!-- Ⓐ 社長・事務員 → 管理画面 -->
+      <path d="M290,620 H466" stroke="#2f64a8" stroke-dasharray="10 6" marker-end="url(#hi)"/>
+      <!-- Ⓑ 管理画面 ⇄ 保管庫 -->
+      <path d="M844,556 H906" stroke="#2f64a8" stroke-dasharray="10 6" marker-start="url(#hi)" marker-end="url(#hi)"/>
+      <!-- Ⓒ 管理画面 → Gmail -->
+      <path d="M840,700 H1216" stroke="#2f64a8" stroke-dasharray="10 6" marker-end="url(#hi)"/>
+      <!-- Ⓓ Gmail → 受け取る人 -->
+      <path d="M1380,560 V500" stroke="#2f64a8" stroke-dasharray="10 6" marker-end="url(#hi)"/>
+    </g>
+  </svg>
+
+  <!-- 矢印の説明 -->
+  <div class="abs step s" style="left:300px; top:222px;">① 日報を送る</div>
+  <div class="abs step s" style="left:832px; top:334px;">② 保存</div>
+  <div class="abs step s" style="left:300px; top:358px;">③ 確定した明細<br>を見る・PDF</div>
+  <div class="abs step i" style="left:300px; top:588px;">Ⓐ 確認・計算・承認</div>
+  <div class="abs step i" style="left:832px; top:564px;">Ⓑ 保存</div>
+  <div class="abs step i" style="left:1000px; top:708px;">Ⓒ メールを頼む</div>
+  <div class="abs step i" style="left:1392px; top:516px;">Ⓓ 届く</div>
+
+  <!-- 安全の境界 -->
+  <section class="abs safety">
+    <h3>安全の境界</h3>
+    <div class="card gatec">
+      <h4>入口の確認</h4>
+      <ul>
+        <li>名前とパスワードで入った人だけが使える。パスワードは元に戻せない形に変えて保存する</li>
+        <li>従業員が見られるのは、自分の日報と、承認して確定した自分の明細だけ<br><small>単価や他の人の給与は、従業員の画面には出ない</small></li>
+        <li>管理画面は、管理者（社長・事務員）として入った人だけが開ける</li>
+      </ul>
+    </div>
+    <div class="card tokyoc">
+      <h4>データを置く場所</h4>
+      <ul>
+        <li>日報・時給と控除の設定・明細・前払いの台帳・請求書は、すべて保管庫（PostgreSQL）に置く</li>
+        <li>サイトは Vercel（ウェブサイトを動かすサービス）のシンガポールで動く。保管庫は、そのサーバーだけが読み書きできる</li>
+        <li>鍵（ログインの合言葉や Gmail のアプリパスワード）は、サーバーの中だけで使う。画面には出ない</li>
+      </ul>
+    </div>
+    <div class="card usc">
+      <h4>外に送るもの</h4>
+      <ul>
+        <li>外に出るのは、Gmail から送るメールだけ。管理者が「送る」を押したときに送る<br><small>振込完了のお知らせだけは、全員の振込を確認し終えたときに自動で社長へ送る</small></li>
+        <li>送り先は、元請け・社長・税理士の決めたアドレスだけ</li>
+        <li>このサンプルの名前・会社・金額は、すべて作り物</li>
+      </ul>
+    </div>
+  </section>
+
+</div>
+</body>
+</html>
